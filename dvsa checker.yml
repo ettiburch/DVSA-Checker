@@ -1,0 +1,39 @@
+name: DVSA Slot Checker
+
+on:
+  schedule:
+    # Runs every 15 minutes around the clock
+    # GitHub Actions cron uses UTC — adjust if you want UK-hours-only checks
+    - cron: "*/15 * * * *"
+
+  # Allows you to trigger a manual run from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  check-slots:
+    name: Check Cheltenham slots
+    runs-on: ubuntu-latest
+    timeout-minutes: 5      # kill the job if it hangs
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run slot checker
+        env:
+          DVSA_LICENCE_NUMBER:     ${{ secrets.DVSA_LICENCE_NUMBER }}
+          DVSA_BOOKING_REFERENCE:  ${{ secrets.DVSA_BOOKING_REFERENCE }}
+          EMAIL_SENDER:            ${{ secrets.EMAIL_SENDER }}
+          EMAIL_APP_PASSWORD:      ${{ secrets.EMAIL_APP_PASSWORD }}
+          EMAIL_RECIPIENT:         ${{ secrets.EMAIL_RECIPIENT }}
+          NTFY_TOPIC:              ${{ secrets.NTFY_TOPIC }}
+        run: python checker.py
